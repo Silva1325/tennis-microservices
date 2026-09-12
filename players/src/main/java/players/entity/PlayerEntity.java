@@ -1,11 +1,23 @@
 package players.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+
 @Entity
+@Getter
+@Setter
+@NoArgsConstructor
 public class PlayerEntity {
 
     @Id
@@ -23,7 +35,14 @@ public class PlayerEntity {
 
     private int age;
 
-    private PlayerEntity(){}
+    @CreationTimestamp
+    @Column(name = "create_date", nullable = false, updatable = false)
+    private LocalDateTime createDate;
+
+    @UpdateTimestamp
+    @Column(name = "update_date", nullable = false)
+    private LocalDateTime updateDate;
+
 
     public PlayerEntity(String firstname, String lastname, String country, int age){
         this.firstname = firstname;
@@ -32,43 +51,4 @@ public class PlayerEntity {
         this.age = age;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getFirstname() {
-        return firstname;
-    }
-
-    public void setFirstname(String firstname) {
-        this.firstname = firstname;
-    }
-
-    public String getLastname() {
-        return lastname;
-    }
-
-    public void setLastname(String lastname) {
-        this.lastname = lastname;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public void setCountry(String country) {
-        this.country = country;
-    }
-
-    public int getAge() {
-        return age;
-    }
-
-    public void setAge(int age) {
-        this.age = age;
-    }
 }

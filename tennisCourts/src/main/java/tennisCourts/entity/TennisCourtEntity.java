@@ -1,5 +1,7 @@
 package tennisCourts.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -7,7 +9,17 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+
 @Entity
+@Getter
+@Setter
+@NoArgsConstructor
 public class TennisCourtEntity {
 
     @Id
@@ -27,52 +39,18 @@ public class TennisCourtEntity {
     @Enumerated(EnumType.STRING)
     private Surface surface;
 
-    public TennisCourtEntity(){}
+    @CreationTimestamp
+    @Column(name = "create_date", nullable = false, updatable = false)
+    private LocalDateTime createDate;
+
+    @UpdateTimestamp
+    @Column(name = "update_date", nullable = false)
+    private LocalDateTime updateDate;
 
     public TennisCourtEntity(String name, String country, String city, Surface surface){
         this.name = name;
         this.country = country;
         this.city = city;
-        this.surface = surface;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public void setCountry(String country) {
-        this.country = country;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public Surface getSurface() {
-        return surface;
-    }
-
-    public void setSurface(Surface surface) {
         this.surface = surface;
     }
 }

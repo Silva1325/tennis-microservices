@@ -11,11 +11,14 @@ The project is made up of two completely independent Quarkus applications, each 
 | Players       | `players/`     | 8080 | `/players`       |
 | Tennis Courts | `tennisCourts/`| 8081 | `/tennisCourts`  |
 
-Each service follows the **Boundary-Control-Entity (BCE)** pattern internally:
+Each service follows the **Boundary-Control-Entity (BCE)** pattern internally, with the Control layer further split following **CQRS** (Command Query Responsibility Segregation) and a dedicated Repository:
 
-- **Boundary** — the REST resource (e.g. `PlayerResource`) that handles HTTP requests/responses only.
-- **Control** — the service layer (e.g. `PlayerService`) that owns the business logic and data access, built on [Hibernate ORM with Panache](https://quarkus.io/guides/hibernate-orm-panache).
-- **Entity** — the JPA-mapped domain object (e.g. `PlayerEntity`) representing the persisted data.
+- **Boundary** — the REST resource (e.g. `PlayerResource`) that handles HTTP requests/responses only, using request/response DTOs (e.g. `CreatePlayerRequest`, `PlayerResponse`) to decouple the API contract from the JPA entities.
+- **Control** — split into:
+  - a **Repository** (e.g. `PlayerRepository`) that owns data access only, built on [Hibernate ORM with Panache](https://quarkus.io/guides/hibernate-orm-panache);
+  - a **Command service** (e.g. `PlayerCommandService`) that owns writes (create/update/delete);
+  - a **Query service** (e.g. `PlayerQueryService`) that owns reads (list/find), with no side effects.
+- **Entity** — the JPA-mapped domain object (e.g. `PlayerEntity`), using [Lombok](https://projectlombok.org) (`@Getter`, `@Setter`, `@NoArgsConstructor`) to remove boilerplate, and auditing fields (`createDate`, `updateDate`) auto-populated by Hibernate.
 
 ## Tech stack
 
@@ -23,12 +26,14 @@ Each service follows the **Boundary-Control-Entity (BCE)** pattern internally:
 - RESTEasy Reactive with Jackson (`quarkus-rest-jackson`)
 - Hibernate ORM with Panache (`quarkus-hibernate-orm-panache`)
 - PostgreSQL, auto-provisioned via Quarkus Dev Services (requires Docker running locally — no manual database setup needed for development)
+- [Lombok](https://projectlombok.org) for entity boilerplate (getters/setters/constructors)
 
 ## Prerequisites
 
-- JDK 17+
+- JDK 25+
 - Docker (running), for Quarkus Dev Services to auto-provision a PostgreSQL container per service
 - Maven wrapper is included, so a separate Maven install isn't required
+- The [Lombok IntelliJ plugin](https://plugins.jetbrains.com/plugin/6317-lombok) (with "Enable annotation processing" turned on) if you're working in IntelliJ
 
 ## Running the services
 
@@ -66,7 +71,9 @@ curl -s -X POST localhost:8080/players \
   -d '{"firstname":"Rafael","lastname":"Nadal","country":"Spain","age":37}'
 ```
 
-Request body fields: `firstname`, `lastname`, `country` (all required strings), `age` (int).
+Request body fields (`CreatePlayerRequest`): `firstname`, `lastname`, `country` (all required strings), `age` (int).
+
+Response body fields (`PlayerResponse`): `id`, `firstname`, `lastname`, `country`, `age`, `createDate`, `updateDate`.
 
 ### Tennis Courts (`http://localhost:8081`)
 
@@ -84,7 +91,9 @@ curl -s -X POST localhost:8081/tennisCourts \
   -d '{"name":"Clube Tenis Porto","country":"Portugal","city":"Porto","surface":"CLAY"}'
 ```
 
-Request body fields: `name`, `country`, `city` (all required strings), `surface` (required, one of `CLAY`, `GRASS`, `HARD`, `CARPET`).
+Request body fields (`CreateTennisCourtRequest`): `name`, `country`, `city` (all required strings), `surface` (required, one of `CLAY`, `GRASS`, `HARD`, `CARPET`).
+
+Response body fields (`TennisCourtResponse`): `id`, `name`, `country`, `city`, `surface`, `createDate`, `updateDate`.
 
 ## Project structure
 
@@ -92,12 +101,25 @@ Request body fields: `name`, `country`, `city` (all required strings), `surface`
 tennis-microservices/
 ├── players/
 │   └── src/main/java/players/
-│       ├── boundary/   → PlayerResource (REST endpoints)
-│       ├── control/    → PlayerService (business logic + persistence)
-│       └── entity/     → PlayerEntity (JPA entity)
+│       ├── boundary/
+│       │   ├── PlayerResource.java        → REST endpoints
+│       │   └── dto/                       → CreatePlayerRequest, PlayerResponse
+│       ├── control/
+│       │   ├── PlayerRepository.java      → data access (Panache)
+│       │   ├── PlayerCommandService.java  → writes
+│       │   └── PlayerQueryService.java    → reads
+│       └── entity/
+│           └── PlayerEntity.java          → JPA entity (Lombok)
 └── tennisCourts/
     └── src/main/java/tennisCourts/
-        ├── boundary/   → TennisCourtResource (REST endpoints)
-        ├── control/    → TennisCourtService (business logic + persistence)
-        └── entity/     → TennisCourtEntity, Surface (JPA entity + enum)
+        ├── boundary/
+        │   ├── TennisCourtResource.java        → REST endpoints
+        │   └── dto/                            → CreateTennisCourtRequest, TennisCourtResponse
+        ├── control/
+        │   ├── TennisCourtRepository.java      → data access (Panache)
+        │   ├── TennisCourtCommandService.java  → writes
+        │   └── TennisCourtQueryService.java    → reads
+        └── entity/
+            ├── TennisCourtEntity.java          → JPA entity (Lombok)
+            └── Surface.java                    → enum (CLAY, GRASS, HARD, CARPET)
 ```

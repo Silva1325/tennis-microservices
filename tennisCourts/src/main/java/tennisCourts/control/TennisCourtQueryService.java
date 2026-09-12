@@ -1,0 +1,23 @@
+package tennisCourts.control;
+
+import java.util.List;
+import java.util.Optional;
+
+import tennisCourts.entity.TennisCourtEntity;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
+@ApplicationScoped
+public class TennisCourtQueryService {
+    @Inject
+    TennisCourtRepository repository;
+
+    public List<TennisCourtEntity> list() {
+        return repository.listAll();
+    }
+
+    public Optional<TennisCourtEntity> findById(String id) {
+        return repository.find("id", id).firstResultOptional();
+    }
+}
