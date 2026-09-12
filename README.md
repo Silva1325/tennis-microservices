@@ -4,7 +4,7 @@ A small microservices-based REST API for managing tennis players and tennis cour
 
 ## Architecture
 
-The project is made up of two completely independent Quarkus applications, each with its own `pom.xml`, its own database, and its own HTTP port:
+The project is made up of two completely independent Quarkus applications, each with its own `pom.xml`, its own database, and its own HTTP port. A root `pom.xml` aggregates both as Maven modules purely for build convenience (`./mvnw install` from the root builds both) — it does **not** create a shared runtime dependency between them; each service is still built, versioned, and deployed independently:
 
 | Service       | Path           | Port | Resource        |
 |---------------|----------------|------|------------------|
@@ -53,6 +53,13 @@ cd tennisCourts
 
 On first startup, each service will pull and start its own throwaway PostgreSQL container automatically — no datasource configuration required.
 
+To just compile/test both modules together from the root (without running dev mode):
+
+```bash
+./mvnw install
+```
+
+
 ## API
 
 ### Players (`http://localhost:8080`)
@@ -99,6 +106,7 @@ Response body fields (`TennisCourtResponse`): `id`, `name`, `country`, `city`, `
 
 ```
 tennis-microservices/
+├── pom.xml                 → aggregator pom (build convenience only)
 ├── players/
 │   └── src/main/java/players/
 │       ├── boundary/
