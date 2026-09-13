@@ -2,6 +2,7 @@ package tennisCourts.control;
 
 import tennisCourts.entity.TennisCourtEntity;
 import tennisCourts.entity.Surface;
+import tennisCourts.control.exception.DuplicateTennisCourtException;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -14,8 +15,11 @@ public class TennisCourtCommandService {
 
     @Transactional
     public TennisCourtEntity create(String name, String country, String city, Surface surface) {
-        TennisCourtEntity p = new TennisCourtEntity(name, country, city, surface);
-        repository.persist(p);
-        return p;
+        if (repository.findByNameAndCity(name, city).isPresent()) {
+            throw new DuplicateTennisCourtException(name, city);
+        }
+        TennisCourtEntity court = new TennisCourtEntity(name, country, city, surface);
+        repository.persist(court);
+        return court;
     }
 }

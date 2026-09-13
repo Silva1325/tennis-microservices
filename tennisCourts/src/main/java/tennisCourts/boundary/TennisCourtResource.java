@@ -9,11 +9,11 @@ import tennisCourts.boundary.dto.CreateTennisCourtRequest;
 import tennisCourts.boundary.dto.TennisCourtResponse;
 import tennisCourts.control.TennisCourtCommandService;
 import tennisCourts.control.TennisCourtQueryService;
+import tennisCourts.control.exception.TennisCourtNotFoundException;
 import tennisCourts.entity.TennisCourtEntity;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -43,6 +43,6 @@ public class TennisCourtResource {
     @GET
     @Path("{id}")
     public TennisCourtResponse get(@PathParam("id") UUID id) {
-        return TennisCourtResponse.from(queryService.findByPublicId(id).orElseThrow(NotFoundException::new));
+        return TennisCourtResponse.from(queryService.findByPublicId(id).orElseThrow(() -> new TennisCourtNotFoundException(id)));
     }
 }

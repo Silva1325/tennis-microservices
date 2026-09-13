@@ -1,14 +1,7 @@
 package players.entity;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -17,15 +10,15 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor
-public class PlayerEntity {
+public class PlayerEntity extends AbstractEntity {
 
-    @Id
-    @GeneratedValue
+    @Column(nullable = false, unique = true)
     @Setter
-    private Long id;
+    private String email;
 
-    @Column(name = "public_id", nullable = false, updatable = false, unique = true)
-    private UUID publicId = UUID.randomUUID();
+    @Column(nullable = false)
+    @Setter
+    private String password;
 
     @Column(nullable = false)
     @Setter
@@ -42,16 +35,9 @@ public class PlayerEntity {
     @Setter
     private int age;
 
-    @CreationTimestamp
-    @Column(name = "create_date", nullable = false, updatable = false)
-    private LocalDateTime createDate;
-
-    @UpdateTimestamp
-    @Column(name = "update_date", nullable = false)
-    private LocalDateTime updateDate;
-
-
-    public PlayerEntity(String firstname, String lastname, String country, int age){
+    public PlayerEntity(String email, String password, String firstname, String lastname, String country, int age){
+        this.email = email;
+        this.password = password;
         this.firstname = firstname;
         this.lastname = lastname;
         this.country = country;

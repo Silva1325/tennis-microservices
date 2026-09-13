@@ -7,6 +7,7 @@ import players.entity.PlayerEntity;
 
 public record PlayerResponse(
     UUID id,
+    String email,
     String firstname,
     String lastname,
     String country,
@@ -17,6 +18,7 @@ public record PlayerResponse(
     public static PlayerResponse from(PlayerEntity entity) {
         return new PlayerResponse(
             entity.getPublicId(),
+            entity.getEmail(),
             entity.getFirstname(),
             entity.getLastname(),
             entity.getCountry(),

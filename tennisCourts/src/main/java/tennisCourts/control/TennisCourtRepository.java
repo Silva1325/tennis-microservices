@@ -11,6 +11,10 @@ import java.util.UUID;
 @ApplicationScoped
 public class TennisCourtRepository implements PanacheRepository<TennisCourtEntity> {
     public Optional<TennisCourtEntity> findByPublicId(UUID publicId){
-        return find("publicId",publicId).firstResultOptional();
+        return find("publicId", publicId).firstResultOptional();
+    }
+
+    public Optional<TennisCourtEntity> findByNameAndCity(String name, String city){
+        return find("name = ?1 and city = ?2", name, city).firstResultOptional();
     }
 }

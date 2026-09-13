@@ -12,4 +12,7 @@ public class PlayerRepository implements PanacheRepository<PlayerEntity> {
     public Optional<PlayerEntity> findByPublicId(UUID publicId) {
         return find("publicId", publicId).firstResultOptional();
     }
+    public Optional<PlayerEntity> findByEmail(String email) {
+        return find("email", email).firstResultOptional();
+    }
 }
