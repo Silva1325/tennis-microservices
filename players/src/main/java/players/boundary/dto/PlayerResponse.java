@@ -1,11 +1,12 @@
 package players.boundary.dto;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import players.entity.PlayerEntity;
 
 public record PlayerResponse(
-    Long id,
+    UUID id,
     String firstname,
     String lastname,
     String country,
@@ -15,7 +16,7 @@ public record PlayerResponse(
 ) {
     public static PlayerResponse from(PlayerEntity entity) {
         return new PlayerResponse(
-            entity.getId(),
+            entity.getPublicId(),
             entity.getFirstname(),
             entity.getLastname(),
             entity.getCountry(),

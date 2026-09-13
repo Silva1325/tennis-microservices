@@ -2,6 +2,7 @@ package players.control;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import players.entity.PlayerEntity;
 
@@ -17,7 +18,7 @@ public class PlayerQueryService {
         return repository.listAll();
     }
 
-    public Optional<PlayerEntity> findById(String id) {
-        return repository.find("id", id).firstResultOptional();
+    public Optional<PlayerEntity> findByPublicId(UUID publicId) {
+        return repository.findByPublicId(publicId);
     }
 }

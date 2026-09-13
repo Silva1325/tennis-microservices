@@ -2,7 +2,9 @@ package players.boundary;
 
 import java.net.URI;
 import java.util.List;
+import java.util.UUID;
 
+import jakarta.validation.Valid;
 import players.boundary.dto.CreatePlayerRequest;
 import players.boundary.dto.PlayerResponse;
 import players.control.PlayerQueryService;
@@ -10,7 +12,6 @@ import players.control.PlayerCommandService;
 import players.entity.PlayerEntity;
 
 import jakarta.inject.Inject;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
@@ -27,12 +28,9 @@ public class PlayerResource {
     PlayerQueryService queryService;
 
     @POST
-    public Response create(CreatePlayerRequest req){
-        if(req == null || req.firstname() == null || req.lastname() == null || req.country() == null){
-            throw new BadRequestException("Bad Request");
-        }
+    public Response create(@Valid CreatePlayerRequest req){
         PlayerEntity created = commandService.create(req.firstname(), req.lastname(), req.country(), req.age());
-        return Response.created(URI.create("/players/" + created.getId()))
+        return Response.created(URI.create("/players/" + created.getPublicId()))
                 .entity(PlayerResponse.from(created))
                 .build();
     }
@@ -44,7 +42,7 @@ public class PlayerResource {
 
     @GET
     @Path("{id}")
-    public PlayerResponse get(@PathParam("id") String id) {
-        return PlayerResponse.from(queryService.findById(id).orElseThrow(NotFoundException::new));
+    public PlayerResponse get(@PathParam("id") UUID id) {
+        return PlayerResponse.from(queryService.findByPublicId(id).orElseThrow(NotFoundException::new));
     }
 }

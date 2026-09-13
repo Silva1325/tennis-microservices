@@ -13,18 +13,28 @@ The project is made up of two completely independent Quarkus applications, each 
 
 Each service follows the **Boundary-Control-Entity (BCE)** pattern internally, with the Control layer further split following **CQRS** (Command Query Responsibility Segregation) and a dedicated Repository:
 
-- **Boundary** — the REST resource (e.g. `PlayerResource`) that handles HTTP requests/responses only, using request/response DTOs (e.g. `CreatePlayerRequest`, `PlayerResponse`) to decouple the API contract from the JPA entities.
+- **Boundary** — the REST resource (e.g. `PlayerResource`) that handles HTTP requests/responses only, using request/response DTOs (e.g. `CreatePlayerRequest`, `PlayerResponse`) to decouple the API contract from the JPA entities. Requests are validated declaratively with [Jakarta Bean Validation](https://quarkus.io/guides/validation) (`@NotBlank`, `@NotNull`, `@Min`, `@Valid`).
 - **Control** — split into:
   - a **Repository** (e.g. `PlayerRepository`) that owns data access only, built on [Hibernate ORM with Panache](https://quarkus.io/guides/hibernate-orm-panache);
   - a **Command service** (e.g. `PlayerCommandService`) that owns writes (create/update/delete);
   - a **Query service** (e.g. `PlayerQueryService`) that owns reads (list/find), with no side effects.
-- **Entity** — the JPA-mapped domain object (e.g. `PlayerEntity`), using [Lombok](https://projectlombok.org) (`@Getter`, `@Setter`, `@NoArgsConstructor`) to remove boilerplate, and auditing fields (`createDate`, `updateDate`) auto-populated by Hibernate.
+- **Entity** — the JPA-mapped domain object (e.g. `PlayerEntity`), using [Lombok](https://projectlombok.org) (`@Getter`, per-field `@Setter`, `@NoArgsConstructor`) to remove boilerplate, and auditing fields (`createDate`, `updateDate`) auto-populated by Hibernate.
+
+### Internal vs. external identifiers
+
+Each entity has two identifiers:
+
+- `id` (`Long`, auto-generated primary key) — internal only, used by Hibernate for indexing and relations. Never exposed by the API.
+- `publicId` (`UUID`, generated on creation) — the identifier the API actually exposes (as `id` in request/response DTOs) and the one used in URLs (e.g. `/players/{publicId}`).
+
+This avoids exposing a sequential, guessable identifier (and the information it leaks, like record count and creation rate) while keeping an efficient `Long` primary key for the database itself.
 
 ## Tech stack
 
 - Java + Quarkus
 - RESTEasy Reactive with Jackson (`quarkus-rest-jackson`)
 - Hibernate ORM with Panache (`quarkus-hibernate-orm-panache`)
+- Jakarta Bean Validation (`quarkus-hibernate-validator`)
 - PostgreSQL, auto-provisioned via Quarkus Dev Services (requires Docker running locally — no manual database setup needed for development)
 - [Lombok](https://projectlombok.org) for entity boilerplate (getters/setters/constructors)
 
@@ -59,7 +69,6 @@ To just compile/test both modules together from the root (without running dev mo
 ./mvnw install
 ```
 
-
 ## API
 
 ### Players (`http://localhost:8080`)
@@ -67,7 +76,7 @@ To just compile/test both modules together from the root (without running dev mo
 | Method | Path            | Description              |
 |--------|-----------------|---------------------------|
 | GET    | `/players`      | List all players          |
-| GET    | `/players/{id}` | Get a player by id        |
+| GET    | `/players/{id}` | Get a player by id (UUID) |
 | POST   | `/players`      | Create a new player       |
 
 **Create a player**
@@ -78,17 +87,29 @@ curl -s -X POST localhost:8080/players \
   -d '{"firstname":"Rafael","lastname":"Nadal","country":"Spain","age":37}'
 ```
 
-Request body fields (`CreatePlayerRequest`): `firstname`, `lastname`, `country` (all required strings), `age` (int).
+```json
+{
+  "id": "ad7109a6-fe12-4b8b-a64b-dde959c1fbfb",
+  "firstname": "Rafael",
+  "lastname": "Nadal",
+  "country": "Spain",
+  "age": 37,
+  "createDate": "2026-09-13T01:57:16.552958",
+  "updateDate": "2026-09-13T01:57:16.552971"
+}
+```
 
-Response body fields (`PlayerResponse`): `id`, `firstname`, `lastname`, `country`, `age`, `createDate`, `updateDate`.
+Request body fields (`CreatePlayerRequest`): `firstname`, `lastname`, `country` (required, non-blank strings), `age` (int, `>= 0`).
+
+Response body fields (`PlayerResponse`): `id` (UUID), `firstname`, `lastname`, `country`, `age`, `createDate`, `updateDate`.
 
 ### Tennis Courts (`http://localhost:8081`)
 
-| Method | Path                 | Description                |
-|--------|----------------------|------------------------------|
-| GET    | `/tennisCourts`      | List all tennis courts       |
-| GET    | `/tennisCourts/{id}` | Get a tennis court by id     |
-| POST   | `/tennisCourts`      | Create a new tennis court    |
+| Method | Path                 | Description                    |
+|--------|----------------------|----------------------------------|
+| GET    | `/tennisCourts`      | List all tennis courts           |
+| GET    | `/tennisCourts/{id}` | Get a tennis court by id (UUID)  |
+| POST   | `/tennisCourts`      | Create a new tennis court        |
 
 **Create a tennis court**
 
@@ -98,9 +119,9 @@ curl -s -X POST localhost:8081/tennisCourts \
   -d '{"name":"Clube Tenis Porto","country":"Portugal","city":"Porto","surface":"CLAY"}'
 ```
 
-Request body fields (`CreateTennisCourtRequest`): `name`, `country`, `city` (all required strings), `surface` (required, one of `CLAY`, `GRASS`, `HARD`, `CARPET`).
+Request body fields (`CreateTennisCourtRequest`): `name`, `country`, `city` (required, non-blank strings), `surface` (required, one of `CLAY`, `GRASS`, `HARD`, `CARPET`).
 
-Response body fields (`TennisCourtResponse`): `id`, `name`, `country`, `city`, `surface`, `createDate`, `updateDate`.
+Response body fields (`TennisCourtResponse`): `id` (UUID), `name`, `country`, `city`, `surface`, `createDate`, `updateDate`.
 
 ## Project structure
 
@@ -117,7 +138,7 @@ tennis-microservices/
 │       │   ├── PlayerCommandService.java  → writes
 │       │   └── PlayerQueryService.java    → reads
 │       └── entity/
-│           └── PlayerEntity.java          → JPA entity (Lombok)
+│           └── PlayerEntity.java          → JPA entity (Lombok, internal id + public UUID)
 └── tennisCourts/
     └── src/main/java/tennisCourts/
         ├── boundary/
@@ -128,6 +149,12 @@ tennis-microservices/
         │   ├── TennisCourtCommandService.java  → writes
         │   └── TennisCourtQueryService.java    → reads
         └── entity/
-            ├── TennisCourtEntity.java          → JPA entity (Lombok)
+            ├── TennisCourtEntity.java          → JPA entity (Lombok, internal id + public UUID)
             └── Surface.java                    → enum (CLAY, GRASS, HARD, CARPET)
 ```
+
+## Known gaps / next steps
+
+- No automated tests yet (`src/test` is currently empty in both modules).
+- No OpenAPI/Swagger UI exposed.
+- Only Create and Read are implemented — no Update or Delete endpoints yet.

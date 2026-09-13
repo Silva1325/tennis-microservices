@@ -1,12 +1,13 @@
 package tennisCourts.boundary.dto;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import tennisCourts.entity.Surface;
 import tennisCourts.entity.TennisCourtEntity;
 
 public record TennisCourtResponse(
-    Long id,
+    UUID id,
     String name,
     String country,
     String city,
@@ -16,7 +17,7 @@ public record TennisCourtResponse(
 ) {
     public static TennisCourtResponse from(TennisCourtEntity entity) {
         return new TennisCourtResponse(
-            entity.getId(),
+            entity.getPublicId(),
             entity.getName(),
             entity.getCountry(),
             entity.getCity(),

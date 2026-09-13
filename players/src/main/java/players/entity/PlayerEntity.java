@@ -1,7 +1,7 @@
 package players.entity;
 
 import java.time.LocalDateTime;
-
+import java.util.UUID;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -16,23 +16,30 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Setter
 @NoArgsConstructor
 public class PlayerEntity {
 
     @Id
     @GeneratedValue
+    @Setter
     private Long id;
 
+    @Column(name = "public_id", nullable = false, updatable = false, unique = true)
+    private UUID publicId = UUID.randomUUID();
+
     @Column(nullable = false)
+    @Setter
     private String firstname;
 
     @Column(nullable = false)
+    @Setter
     private String lastname;
 
     @Column(nullable = false)
+    @Setter
     private String country;
 
+    @Setter
     private int age;
 
     @CreationTimestamp

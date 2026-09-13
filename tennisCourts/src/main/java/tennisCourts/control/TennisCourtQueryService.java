@@ -2,6 +2,7 @@ package tennisCourts.control;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import tennisCourts.entity.TennisCourtEntity;
 
@@ -17,7 +18,7 @@ public class TennisCourtQueryService {
         return repository.listAll();
     }
 
-    public Optional<TennisCourtEntity> findById(String id) {
-        return repository.find("id", id).firstResultOptional();
+    public Optional<TennisCourtEntity> findByPublicId(UUID publicId) {
+        return repository.findByPublicId(publicId);
     }
 }

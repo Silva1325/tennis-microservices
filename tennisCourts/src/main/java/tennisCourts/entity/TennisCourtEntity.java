@@ -1,6 +1,7 @@
 package tennisCourts.entity;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,25 +19,32 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Setter
 @NoArgsConstructor
 public class TennisCourtEntity {
 
     @Id
     @GeneratedValue
+    @Setter
     private Long id;
 
+    @Column(name = "public_id", nullable = false, updatable = false, unique = true)
+    private UUID publicId = UUID.randomUUID();
+
     @Column(nullable = false)
+    @Setter
     private String name;
 
     @Column(nullable = false)
+    @Setter
     private String country;
 
     @Column(nullable = false)
+    @Setter
     private String city;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
+    @Setter
     private Surface surface;
 
     @CreationTimestamp
