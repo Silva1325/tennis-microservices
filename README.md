@@ -18,6 +18,7 @@ Each service follows the **Boundary-Control-Entity (BCE)** pattern internally, w
   - a **Repository** (e.g. `PlayerRepository`) that owns data access only, built on [Hibernate ORM with Panache](https://quarkus.io/guides/hibernate-orm-panache);
   - a **Command service** (e.g. `PlayerCommandService`) that owns writes (create/update/delete);
   - a **Query service** (e.g. `PlayerQueryService`) that owns reads (list/find), with no side effects.
+  - **Command objects** (e.g. `CreatePlayerCommand`, `UpdatePlayerCommand`, `DeletePlayerCommand`) — immutable records in `control/command/` that describe each write. The resource maps the request DTO to a command, and the command service takes that single object instead of a long parameter list.
 - **Entity** — the JPA-mapped domain object (e.g. `PlayerEntity`), using [Lombok](https://projectlombok.org) (`@Getter`, per-field `@Setter`, `@NoArgsConstructor`) to remove boilerplate, and auditing fields (`createDate`, `updateDate`) auto-populated by Hibernate.
 
 ### Internal vs. external identifiers
@@ -78,18 +79,21 @@ To just compile/test both modules together from the root (without running dev mo
 | GET    | `/players`      | List all players          |
 | GET    | `/players/{id}` | Get a player by id (UUID) |
 | POST   | `/players`      | Create a new player       |
+| PUT    | `/players/{id}` | Update a player           |
+| DELETE | `/players/{id}` | Delete a player           |
 
 **Create a player**
 
 ```bash
 curl -s -X POST localhost:8080/players \
   -H "Content-Type: application/json" \
-  -d '{"firstname":"Rafael","lastname":"Nadal","country":"Spain","age":37}'
+  -d '{"email":"rafa@example.com","password":"secret","firstname":"Rafael","lastname":"Nadal","country":"Spain","age":37}'
 ```
 
 ```json
 {
   "id": "ad7109a6-fe12-4b8b-a64b-dde959c1fbfb",
+  "email": "rafa@example.com",
   "firstname": "Rafael",
   "lastname": "Nadal",
   "country": "Spain",
@@ -99,9 +103,13 @@ curl -s -X POST localhost:8080/players \
 }
 ```
 
-Request body fields (`CreatePlayerRequest`): `firstname`, `lastname`, `country` (required, non-blank strings), `age` (int, `>= 0`).
+Request body fields (`CreatePlayerRequest`): `email` (required, valid email, unique), `password`, `firstname`, `lastname`, `country` (required, non-blank strings), `age` (int, `>= 0`).
 
-Response body fields (`PlayerResponse`): `id` (UUID), `firstname`, `lastname`, `country`, `age`, `createDate`, `updateDate`.
+Request body fields (`UpdatePlayerRequest`, for `PUT`): same as create, without `password`. Returns `404` if the player doesn't exist and `409` if the email belongs to another player.
+
+`DELETE` returns `204 No Content`, or `404` if the player doesn't exist.
+
+Response body fields (`PlayerResponse`): `id` (UUID), `email`, `firstname`, `lastname`, `country`, `age`, `createDate`, `updateDate`.
 
 ### Tennis Courts (`http://localhost:8081`)
 
@@ -110,6 +118,8 @@ Response body fields (`PlayerResponse`): `id` (UUID), `firstname`, `lastname`, `
 | GET    | `/tennisCourts`      | List all tennis courts           |
 | GET    | `/tennisCourts/{id}` | Get a tennis court by id (UUID)  |
 | POST   | `/tennisCourts`      | Create a new tennis court        |
+| PUT    | `/tennisCourts/{id}` | Update a tennis court            |
+| DELETE | `/tennisCourts/{id}` | Delete a tennis court            |
 
 **Create a tennis court**
 
@@ -120,6 +130,10 @@ curl -s -X POST localhost:8081/tennisCourts \
 ```
 
 Request body fields (`CreateTennisCourtRequest`): `name`, `country`, `city` (required, non-blank strings), `surface` (required, one of `CLAY`, `GRASS`, `HARD`, `CARPET`).
+
+Request body fields (`UpdateTennisCourtRequest`, for `PUT`): same as create. Returns `404` if the court doesn't exist and `409` if another court already has that name in that city.
+
+`DELETE` returns `204 No Content`, or `404` if the court doesn't exist.
 
 Response body fields (`TennisCourtResponse`): `id` (UUID), `name`, `country`, `city`, `surface`, `createDate`, `updateDate`.
 
@@ -132,22 +146,24 @@ tennis-microservices/
 │   └── src/main/java/players/
 │       ├── boundary/
 │       │   ├── PlayerResource.java        → REST endpoints
-│       │   └── dto/                       → CreatePlayerRequest, PlayerResponse
+│       │   └── dto/                       → Create/UpdatePlayerRequest, PlayerResponse
 │       ├── control/
 │       │   ├── PlayerRepository.java      → data access (Panache)
 │       │   ├── PlayerCommandService.java  → writes
-│       │   └── PlayerQueryService.java    → reads
+│       │   ├── PlayerQueryService.java    → reads
+│       │   └── command/                   → Create/Update/DeletePlayerCommand
 │       └── entity/
 │           └── PlayerEntity.java          → JPA entity (Lombok, internal id + public UUID)
 └── tennisCourts/
     └── src/main/java/tennisCourts/
         ├── boundary/
         │   ├── TennisCourtResource.java        → REST endpoints
-        │   └── dto/                            → CreateTennisCourtRequest, TennisCourtResponse
+        │   └── dto/                            → Create/UpdateTennisCourtRequest, TennisCourtResponse
         ├── control/
         │   ├── TennisCourtRepository.java      → data access (Panache)
         │   ├── TennisCourtCommandService.java  → writes
-        │   └── TennisCourtQueryService.java    → reads
+        │   ├── TennisCourtQueryService.java    → reads
+        │   └── command/                        → Create/Update/DeleteTennisCourtCommand
         └── entity/
             ├── TennisCourtEntity.java          → JPA entity (Lombok, internal id + public UUID)
             └── Surface.java                    → enum (CLAY, GRASS, HARD, CARPET)
@@ -157,4 +173,3 @@ tennis-microservices/
 
 - No automated tests yet (`src/test` is currently empty in both modules).
 - No OpenAPI/Swagger UI exposed.
-- Only Create and Read are implemented — no Update or Delete endpoints yet.
