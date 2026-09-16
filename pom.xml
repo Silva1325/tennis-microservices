@@ -8,10 +8,11 @@
     <packaging>pom</packaging>
 
     <name>tennis-microservices</name>
-    <description>Aggregator pom for the players and tennisCourts microservices. Each module is still an independent, independently deployable Quarkus application with its own pom.xml — this only lets you build/reason about both from the root.</description>
+    <description>Aggregator pom for the players and courts microservices. Each module is still an independent, independently deployable Quarkus application with its own pom.xml — this only lets you build/reason about both from the root.</description>
 
     <modules>
         <module>players</module>
-        <module>tennisCourts</module>
+        <module>courts</module>
+        <module>bookings</module>
     </modules>
 </project>

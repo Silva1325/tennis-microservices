@@ -9,7 +9,7 @@ The project is made up of two completely independent Quarkus applications, each 
 | Service       | Path           | Port | Resource        |
 |---------------|----------------|------|------------------|
 | Players       | `players/`     | 8080 | `/players`       |
-| Tennis Courts | `tennisCourts/`| 8081 | `/tennisCourts`  |
+| Tennis Courts | `courts/`     | 8081 | `/courts`       |
 
 Each service follows the **Boundary-Control-Entity (BCE)** pattern internally, with the Control layer further split following **CQRS** (Command Query Responsibility Segregation) and a dedicated Repository:
 
@@ -58,7 +58,7 @@ cd players
 
 ```bash
 # Terminal 2 — Tennis Courts service (http://localhost:8081)
-cd tennisCourts
+cd courts
 ./mvnw quarkus:dev
 ```
 
@@ -115,27 +115,27 @@ Response body fields (`PlayerResponse`): `id` (UUID), `email`, `firstname`, `las
 
 | Method | Path                 | Description                    |
 |--------|----------------------|----------------------------------|
-| GET    | `/tennisCourts`      | List all tennis courts           |
-| GET    | `/tennisCourts/{id}` | Get a tennis court by id (UUID)  |
-| POST   | `/tennisCourts`      | Create a new tennis court        |
-| PUT    | `/tennisCourts/{id}` | Update a tennis court            |
-| DELETE | `/tennisCourts/{id}` | Delete a tennis court            |
+| GET    | `/courts`      | List all tennis courts          |
+| GET    | `/courts/{id}` | Get a tennis court by id (UUID) |
+| POST   | `/courts`      | Create a new tennis court       |
+| PUT    | `/courts/{id}` | Update a tennis court           |
+| DELETE | `/courts/{id}` | Delete a tennis court           |
 
 **Create a tennis court**
 
 ```bash
-curl -s -X POST localhost:8081/tennisCourts \
+curl -s -X POST localhost:8081/courts \
   -H "Content-Type: application/json" \
   -d '{"name":"Clube Tenis Porto","country":"Portugal","city":"Porto","surface":"CLAY"}'
 ```
 
-Request body fields (`CreateTennisCourtRequest`): `name`, `country`, `city` (required, non-blank strings), `surface` (required, one of `CLAY`, `GRASS`, `HARD`, `CARPET`).
+Request body fields (`CreateCourtRequest`): `name`, `country`, `city` (required, non-blank strings), `surface` (required, one of `CLAY`, `GRASS`, `HARD`, `CARPET`).
 
-Request body fields (`UpdateTennisCourtRequest`, for `PUT`): same as create. Returns `404` if the court doesn't exist and `409` if another court already has that name in that city.
+Request body fields (`UpdateCourtRequest`, for `PUT`): same as create. Returns `404` if the court doesn't exist and `409` if another court already has that name in that city.
 
 `DELETE` returns `204 No Content`, or `404` if the court doesn't exist.
 
-Response body fields (`TennisCourtResponse`): `id` (UUID), `name`, `country`, `city`, `surface`, `createDate`, `updateDate`.
+Response body fields (`CourtResponse`): `id` (UUID), `name`, `country`, `city`, `surface`, `createDate`, `updateDate`.
 
 ## Project structure
 
@@ -154,18 +154,18 @@ tennis-microservices/
 │       │   └── command/                   → Create/Update/DeletePlayerCommand
 │       └── entity/
 │           └── PlayerEntity.java          → JPA entity (Lombok, internal id + public UUID)
-└── tennisCourts/
-    └── src/main/java/tennisCourts/
+└── courts/
+    └── src/main/java/courts/
         ├── boundary/
-        │   ├── TennisCourtResource.java        → REST endpoints
-        │   └── dto/                            → Create/UpdateTennisCourtRequest, TennisCourtResponse
+        │   ├── CourtResource.java        → REST endpoints
+        │   └── dto/                            → Create/UpdateCourtRequest, CourtResponse
         ├── control/
-        │   ├── TennisCourtRepository.java      → data access (Panache)
-        │   ├── TennisCourtCommandService.java  → writes
-        │   ├── TennisCourtQueryService.java    → reads
-        │   └── command/                        → Create/Update/DeleteTennisCourtCommand
+        │   ├── CourtRepository.java      → data access (Panache)
+        │   ├── CourtCommandService.java  → writes
+        │   ├── CourtQueryService.java    → reads
+        │   └── command/                        → Create/Update/DeleteCourtCommand
         └── entity/
-            ├── TennisCourtEntity.java          → JPA entity (Lombok, internal id + public UUID)
+            ├── CourtEntity.java          → JPA entity (Lombok, internal id + public UUID)
             └── Surface.java                    → enum (CLAY, GRASS, HARD, CARPET)
 ```
 
